@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dairy Milk Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Dairy Milk Management System</h2>
+
+        <div class="mb-4">
+            <h4>Farmers</h4>
+            <button class="btn btn-primary mb-2" onclick="addFarmer()">➕ Add Farmer</button>
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Farmer Name</th>
+                        <th>Address</th>
+                        <th>Mobile Number</th>
+                        <th>Account Number</th>
+                        <th>Milk Quantity (Liters)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="farmerTable"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    
+
+    <script>
+        const API_URL = "http://localhost:9090/farmers";
+
+        async function fetchFarmers() {
+            let response = await fetch(API_URL);
+            let farmers = await response.json();
+            let table = document.getElementById('farmerTable');
+            table.innerHTML = farmers.map(farmer => `
+                <tr>
+                    <td>${farmer.id}</td>
+                    <td>${farmer.name}</td>
+                    <td>${farmer.address}</td>
+                    <td>${farmer.mobileNumber}</td>
+                    <td>${farmer.accountNumber}</td>
+                    <td>${farmer.milkQuantity}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="updateFarmer(${farmer.id})">Update</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteFarmer(${farmer.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addFarmer() {
+            let name = prompt("Enter Farmer Name:");
+            let address = prompt("Enter Address:");
+            let mobileNumber = prompt("Enter Mobile Number:");
+            let accountNumber = prompt("Enter Account Number:");
+            let milkQuantity = prompt("Enter Milk Quantity:");
+
+            if (name && address && mobileNumber && accountNumber && milkQuantity) {
+                let farmerData = {
+                    name: name,
+                    address: address,
+                    mobileNumber: mobileNumber,
+                    accountNumber: accountNumber,
+                    milkQuantity: parseFloat(milkQuantity)
+                };
+
+                let response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(farmerData)
+                });
+
+                if (response.ok) {
+                    alert("Farmer added successfully!");
+                    fetchFarmers(); // Refresh the table
+                } else {
+                    alert("Error adding farmer.");
+                }
+            }
+        }
+
+        async function updateFarmer(id) {
+            let milkQuantity = prompt("Enter updated Milk Quantity (Liters):");
+            if (milkQuantity) {
+                await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ milkQuantity: parseFloat(milkQuantity) })
+                });
+                fetchFarmers();
+            }
+        }
+
+        async function deleteFarmer(id) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            fetchFarmers();
+        }
+
+        fetchFarmers();
+    </script>
+</body>
+</html>
