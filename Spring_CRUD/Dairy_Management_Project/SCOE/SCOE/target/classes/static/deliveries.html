@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dairy Milk Management - Deliveries</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Deliveries Management</h2>
+
+        <button class="btn btn-primary mb-2" onclick="addDelivery()">➕ Add Delivery</button>
+
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Deliverer Name</th>
+                    <th>Address</th>
+                    <th>Mobile Number</th>
+                    <th>Date</th>
+                    <th>Milk Quantity (Liters)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="deliveryTable"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:9090/deliveries";
+
+        async function fetchDeliveries() {
+            let response = await fetch(API_URL);
+            let deliveries = await response.json();
+            let table = document.getElementById('deliveryTable');
+            table.innerHTML = deliveries.map(delivery => `
+                <tr>
+                    <td>${delivery.id}</td>
+                    <td>${delivery.delivererName}</td>
+                    <td>${delivery.address}</td>
+                    <td>${delivery.mobileNumber}</td>
+                    <td>${delivery.date}</td>
+                    <td>${delivery.milkQuantity}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="updateDelivery(${delivery.id})">Update</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteDelivery(${delivery.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addDelivery() {
+            let delivererName = prompt("Enter Deliverer Name:");
+            let address = prompt("Enter Address:");
+            let mobileNumber = prompt("Enter Mobile Number:");
+            let date = prompt("Enter Date (YYYY-MM-DD):");
+            let milkQuantity = prompt("Enter Milk Quantity:");
+
+            if (delivererName && address && mobileNumber && date && milkQuantity) {
+                let deliveryData = {
+                    delivererName: delivererName,
+                    address: address,
+                    mobileNumber: mobileNumber,
+                    date: date,
+                    milkQuantity: parseFloat(milkQuantity)
+                };
+
+                let response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(deliveryData)
+                });
+
+                if (response.ok) {
+                    alert("Delivery added successfully!");
+                    fetchDeliveries();
+                } else {
+                    alert("Error adding delivery.");
+                }
+            }
+        }
+
+        async function updateDelivery(id) {
+            let milkQuantity = prompt("Enter updated Milk Quantity (Liters):");
+            if (milkQuantity) {
+                await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ milkQuantity: parseFloat(milkQuantity) })
+                });
+                fetchDeliveries();
+            }
+        }
+
+        async function deleteDelivery(id) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            fetchDeliveries();
+        }
+
+        fetchDeliveries();
+    </script>
+</body>
+</html>
